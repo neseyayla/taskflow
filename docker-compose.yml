@@ -14,7 +14,22 @@ services:
       - taskflow-postgres-data:/var/lib/postgresql/data
     restart: unless-stopped
 
+  postgres_test:
+    image: postgres:16
+    container_name: taskflow-postgres-test
+    environment:
+      POSTGRES_DB: taskflow_test
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5433:5432"
+    volumes:
+      - taskflow-postgres-test-data:/var/lib/postgresql/data
+    restart: unless-stopped
+
 volumes:
   taskflow-postgres-data:
+    driver: local
+  taskflow-postgres-test-data:
     driver: local
 

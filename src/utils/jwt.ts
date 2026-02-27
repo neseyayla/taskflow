@@ -1,4 +1,4 @@
-import jwt from 'jsonwebtoken';
+import jwt, { type SignOptions, type Secret } from 'jsonwebtoken';
 import type { GlobalRole } from '@prisma/client';
 import { CustomError } from './CustomError';
 
@@ -23,9 +23,12 @@ const getAccessExpiresIn = (): string | number => {
 
 export const signAccessToken = (payload: AccessTokenPayload): string => {
   try {
-    return jwt.sign(payload, getAccessSecret(), {
-      expiresIn: getAccessExpiresIn()
-    });
+    const secret: Secret = getAccessSecret();
+    const options: SignOptions = {
+      expiresIn: getAccessExpiresIn() as any
+    };
+
+    return jwt.sign(payload, secret, options);
   } catch (error) {
     throw new CustomError('Failed to sign access token', 500);
   }
