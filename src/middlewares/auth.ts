@@ -1,4 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
+import type { GlobalRole } from '@prisma/client';
 import { verifyAccessToken } from '../utils/jwt';
 import { CustomError } from '../utils/CustomError';
 
@@ -28,4 +29,19 @@ export const requireAuth = (req: Request, _res: Response, next: NextFunction): v
     return next(error);
   }
 };
+
+export const requireRole =
+  (...roles: GlobalRole[]) =>
+  (req: Request, _res: Response, next: NextFunction): void => {
+    if (!req.user) {
+      return next(new CustomError('Authentication required', 401));
+    }
+
+    if (!roles.includes(req.user.role)) {
+      return next(new CustomError('Forbidden', 403));
+    }
+
+    return next();
+  };
+
 
