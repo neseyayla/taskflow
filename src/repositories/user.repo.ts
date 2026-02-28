@@ -1,3 +1,4 @@
+import type { User } from '@prisma/client';
 import { prisma } from '../config/prisma';
 
 export const userRepository = {
@@ -21,5 +22,10 @@ export const userRepository = {
       }
     });
   }
+};
+
+export const toSafeUser = (user: User) => {
+  const { password, ...rest } = user;
+  return rest;
 };
 

@@ -1,5 +1,8 @@
 import { Router, Request, Response } from 'express';
 import pingRouter from './ping.routes';
+import authRouter from './auth.routes';
+import workspaceRouter from './workspace.routes';
+import adminRouter from './admin.routes';
 
 const router = Router();
 
@@ -12,6 +15,9 @@ router.get('/api', (_req: Request, res: Response) => {
 });
 
 router.use('/api/ping', pingRouter);
+router.use('/api/auth', authRouter);
+router.use('/api/workspaces', workspaceRouter);
+router.use('/api/admin', adminRouter);
 
 export default router;
 
