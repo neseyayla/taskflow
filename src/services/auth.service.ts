@@ -3,7 +3,9 @@ import type { User } from '@prisma/client';
 import { userRepository, toSafeUser } from '../repositories/user.repo';
 import { CustomError } from '../utils/CustomError';
 import { signAccessToken } from '../utils/jwt';
-import type { RegisterBody, LoginBody } from '../schemas/auth.schema';
+import type { RegisterBody, LoginBody, RefreshBody, LogoutBody } from '../schemas/auth.schema';
+import { refreshTokenRepository } from '../repositories/refreshToken.repo';
+import { generateRefreshToken, getRefreshTokenExpiryDate, hashRefreshToken } from '../utils/refreshToken';
 
 const getSaltRounds = (): number => {
   const raw = process.env.BCRYPT_SALT_ROUNDS;
@@ -21,15 +23,26 @@ const getSaltRounds = (): number => {
   return parsed;
 };
 
-const buildAuthResponse = (user: User) => {
+const issueTokensForUser = async (user: User) => {
   const accessToken = signAccessToken({
     userId: user.id,
     role: user.role
   });
 
+  const refreshToken = generateRefreshToken();
+  const tokenHash = hashRefreshToken(refreshToken);
+  const expiresAt = getRefreshTokenExpiryDate();
+
+  await refreshTokenRepository.create({
+    userId: user.id,
+    tokenHash,
+    expiresAt
+  });
+
   return {
     user: toSafeUser(user),
-    accessToken
+    accessToken,
+    refreshToken
   };
 };
 
@@ -48,7 +61,7 @@ export const register = async (payload: RegisterBody) => {
     password: hashedPassword
   });
 
-  return buildAuthResponse(user);
+  return issueTokensForUser(user);
 };
 
 export const login = async (payload: LoginBody) => {
@@ -64,6 +77,29 @@ export const login = async (payload: LoginBody) => {
     throw new CustomError('Invalid email or password', 401);
   }
 
-  return buildAuthResponse(user);
+  return issueTokensForUser(user);
+};
+
+export const refresh = async (payload: RefreshBody) => {
+  const tokenHash = hashRefreshToken(payload.refreshToken);
+  const existing = await refreshTokenRepository.findByTokenHash(tokenHash);
+
+  if (!existing) {
+    throw new CustomError('Invalid or expired refresh token', 401);
+  }
+
+  if (existing.revoked || existing.expiresAt <= new Date()) {
+    throw new CustomError('Invalid or expired refresh token', 401);
+  }
+
+  await refreshTokenRepository.revokeById(existing.id);
+
+  return issueTokensForUser(existing.user);
+};
+
+export const logout = async (payload: LogoutBody) => {
+  const tokenHash = hashRefreshToken(payload.refreshToken);
+
+  await refreshTokenRepository.revokeByTokenHash(tokenHash);
 };
 

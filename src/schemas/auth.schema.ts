@@ -12,6 +12,14 @@ export const loginBodySchema = z.object({
   password: z.string().min(1, 'Password is required')
 });
 
+export const refreshBodySchema = z.object({
+  refreshToken: z.string().min(1, 'Refresh token is required')
+});
+
+export const logoutBodySchema = z.object({
+  refreshToken: z.string().min(1, 'Refresh token is required')
+});
+
 export const registerRequestSchema = z.object({
   body: registerBodySchema,
   params: z.object({}).optional(),
@@ -24,6 +32,20 @@ export const loginRequestSchema = z.object({
   query: z.object({}).optional()
 });
 
+export const refreshRequestSchema = z.object({
+  body: refreshBodySchema,
+  params: z.object({}).optional(),
+  query: z.object({}).optional()
+});
+
+export const logoutRequestSchema = z.object({
+  body: logoutBodySchema,
+  params: z.object({}).optional(),
+  query: z.object({}).optional()
+});
+
 export type RegisterBody = z.infer<typeof registerBodySchema>;
 export type LoginBody = z.infer<typeof loginBodySchema>;
+export type RefreshBody = z.infer<typeof refreshBodySchema>;
+export type LogoutBody = z.infer<typeof logoutBodySchema>;
 
